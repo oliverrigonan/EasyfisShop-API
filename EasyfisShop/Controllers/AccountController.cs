@@ -16,6 +16,7 @@ using Microsoft.Owin.Security.OAuth;
 using EasyfisShop.Models;
 using EasyfisShop.Providers;
 using EasyfisShop.Results;
+using System.Linq;
 
 namespace EasyfisShop.Controllers
 {
@@ -125,7 +126,7 @@ namespace EasyfisShop.Controllers
 
             IdentityResult result = await UserManager.ChangePasswordAsync(User.Identity.GetUserId(), model.OldPassword,
                 model.NewPassword);
-            
+
             if (!result.Succeeded)
             {
                 return GetErrorResult(result);
@@ -258,9 +259,9 @@ namespace EasyfisShop.Controllers
             if (hasRegistered)
             {
                 Authentication.SignOut(DefaultAuthenticationTypes.ExternalCookie);
-                
-                 ClaimsIdentity oAuthIdentity = await user.GenerateUserIdentityAsync(UserManager,
-                    OAuthDefaults.AuthenticationType);
+
+                ClaimsIdentity oAuthIdentity = await user.GenerateUserIdentityAsync(UserManager,
+                   OAuthDefaults.AuthenticationType);
                 ClaimsIdentity cookieIdentity = await user.GenerateUserIdentityAsync(UserManager,
                     CookieAuthenticationDefaults.AuthenticationType);
 
@@ -328,13 +329,107 @@ namespace EasyfisShop.Controllers
                 return BadRequest(ModelState);
             }
 
-            var user = new ApplicationUser() { UserName = model.Email, Email = model.Email };
+            var user = new ApplicationUser() {
+                UserName = model.UserName,
+                FullName = model.FullName
+            };
 
             IdentityResult result = await UserManager.CreateAsync(user, model.Password);
 
             if (!result.Succeeded)
             {
                 return GetErrorResult(result);
+            }
+            else
+            {
+                Data.easyfisdbDataContext db = new Data.easyfisdbDataContext();
+
+                var company = from d in db.MstCompanies select d;
+                Int32 companyId = company.FirstOrDefault().Id;
+
+                var branch = from d in db.MstBranches where d.CompanyId == company.FirstOrDefault().Id select d;
+                Int32 branchId = branch.FirstOrDefault().Id;
+
+                var account = from d in db.MstAccounts select d;
+                Int32 incomeAccountId = account.FirstOrDefault().Id;
+                Int32 customerAdvancesAccountId = account.FirstOrDefault().Id;
+                Int32 supplierAdvancesAccountId = account.FirstOrDefault().Id;
+
+                var discount = from d in db.MstDiscounts select d;
+                Int32 defaultSalesInvoiceDiscountId = discount.FirstOrDefault().Id;
+
+                var inventoryType = "Moving Average";
+                var officialReceiptName = "Official Receipt";
+                var salesInvoiceName = "Sales Invoice";
+                
+                Int32? salesInvoiceCheckedById = null;
+                Int32? salesInvoiceApprovedById = null;
+
+                var adminUser = from d in db.MstUsers where d.UserName.Equals("admin") select d;
+                if (adminUser.Any())
+                {
+                    companyId = adminUser.FirstOrDefault().CompanyId;
+                    branchId = adminUser.FirstOrDefault().BranchId;
+                    incomeAccountId = adminUser.FirstOrDefault().IncomeAccountId;
+                    customerAdvancesAccountId = adminUser.FirstOrDefault().CustomerAdvancesAccountId;
+                    defaultSalesInvoiceDiscountId = adminUser.FirstOrDefault().DefaultSalesInvoiceDiscountId;
+                    salesInvoiceCheckedById = adminUser.FirstOrDefault().SalesInvoiceCheckedById;
+                    salesInvoiceApprovedById = adminUser.FirstOrDefault().SalesInvoiceApprovedById;
+                }
+
+                Data.MstUser newMstUser = new Data.MstUser
+                {
+                    UserId = user.Id,
+                    UserName = model.UserName,
+                    Password = model.Password,
+                    FullName = model.FullName,
+                    CompanyId = companyId,
+                    BranchId = branchId,
+                    IncomeAccountId = incomeAccountId,
+                    SupplierAdvancesAccountId = supplierAdvancesAccountId,
+                    CustomerAdvancesAccountId = customerAdvancesAccountId,
+                    InventoryType = inventoryType,
+                    DefaultSalesInvoiceDiscountId = defaultSalesInvoiceDiscountId,
+                    SalesInvoiceName = salesInvoiceName,
+                    SalesInvoiceCheckedById = salesInvoiceCheckedById,
+                    SalesInvoiceApprovedById = salesInvoiceApprovedById,
+                    OfficialReceiptName = officialReceiptName,
+                    IsIncludeCostStockReports = false,
+                    IsLocked = false,
+                    CreatedById = null,
+                    CreatedDateTime = DateTime.Now,
+                    UpdatedById = null,
+                    UpdatedDateTime = DateTime.Now
+                };
+
+                db.MstUsers.InsertOnSubmit(newMstUser);
+                db.SubmitChanges();
+
+                var currentRegisteredUserId = newMstUser.Id;
+
+                var mstUsersData = from d in db.MstUsers
+                                   where d.Id == currentRegisteredUserId
+                                   select d;
+
+                if (mstUsersData.Any())
+                {
+                    var updateMstUsersData = mstUsersData.FirstOrDefault();
+                    updateMstUsersData.CreatedById = currentRegisteredUserId;
+                    updateMstUsersData.CreatedDateTime = DateTime.Now;
+                    updateMstUsersData.UpdatedById = currentRegisteredUserId;
+                    updateMstUsersData.UpdatedDateTime = DateTime.Now;
+
+                    db.SubmitChanges();
+                }
+
+                Data.MstUserBranch newUserBranch = new Data.MstUserBranch
+                {
+                    UserId = newMstUser.Id,
+                    BranchId = branchId
+                };
+
+                db.MstUserBranches.InsertOnSubmit(newUserBranch);
+                db.SubmitChanges();
             }
 
             return Ok();
@@ -368,7 +463,7 @@ namespace EasyfisShop.Controllers
             result = await UserManager.AddLoginAsync(user.Id, info.Login);
             if (!result.Succeeded)
             {
-                return GetErrorResult(result); 
+                return GetErrorResult(result);
             }
             return Ok();
         }

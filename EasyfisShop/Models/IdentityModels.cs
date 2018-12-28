@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using System;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.EntityFramework;
@@ -16,6 +17,8 @@ namespace EasyfisShop.Models
             // Add custom user claims here
             return userIdentity;
         }
+
+        public String FullName { get; set; }
     }
 
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
