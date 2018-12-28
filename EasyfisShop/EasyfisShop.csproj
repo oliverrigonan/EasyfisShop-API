@@ -320,8 +320,6 @@
   <ItemGroup>
     <Folder Include="APIControllers\" />
     <Folder Include="App_Data\" />
-    <Folder Include="Assets\Icons\" />
-    <Folder Include="Assets\Images\" />
     <Folder Include="Entities\" />
     <Folder Include="PDFControllers\" />
   </ItemGroup>
