@@ -200,6 +200,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ApiControllers\ApiMstShopGroupController.cs" />
+    <Compile Include="ApiControllers\ApiMstShopOrderStatusController.cs" />
+    <Compile Include="ApiControllers\ApiTrnShopOrderController.cs" />
+    <Compile Include="ApiControllers\ApiTrnShopOrderLineController.cs" />
     <Compile Include="App_Start\BundleConfig.cs" />
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\IdentityConfig.cs" />
@@ -242,6 +246,14 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>easyfisdb.dbml</DependentUpon>
     </Compile>
+    <Compile Include="Entities\MstItem.cs" />
+    <Compile Include="Entities\MstShopGroup.cs" />
+    <Compile Include="Entities\MstShopOrderStatus.cs" />
+    <Compile Include="Entities\MstStatus.cs" />
+    <Compile Include="Entities\MstUnit.cs" />
+    <Compile Include="Entities\MstUser.cs" />
+    <Compile Include="Entities\TrnShopOrder.cs" />
+    <Compile Include="Entities\TrnShopOrderLine.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -318,10 +330,8 @@
     <Content Include="Views\Shared\_Layout.cshtml" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="APIControllers\" />
     <Folder Include="App_Data\" />
-    <Folder Include="Entities\" />
-    <Folder Include="PDFControllers\" />
+    <Folder Include="PdfControllers\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="fonts\glyphicons-halflings-regular.woff2" />
