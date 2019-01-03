@@ -36,7 +36,7 @@ namespace EasyfisShop.ApiControllers
                                  UpdatedDateTime = d.UpdatedDateTime.ToShortDateString()
                              };
 
-            return shopGroups.ToList();
+            return shopGroups.OrderByDescending(d => d.Id).ToList();
         }
 
         // ==============
@@ -122,7 +122,7 @@ namespace EasyfisShop.ApiControllers
         // =================
         // Delete Shop Group
         // =================
-        [Authorize, HttpDelete, Route("api/shopGroup/update")]
+        [Authorize, HttpDelete, Route("api/shopGroup/delete")]
         public HttpResponseMessage DeleteShopGroup(String id)
         {
             try
