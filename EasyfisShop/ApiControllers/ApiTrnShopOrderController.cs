@@ -45,7 +45,7 @@ namespace EasyfisShop.ApiControllers
                                  UpdatedDateTime = d.UpdatedDateTime.ToShortDateString()
                              };
 
-            return shopOrders.ToList();
+            return shopOrders.OrderByDescending(d => d.Id).ToList();
         }
 
         // =================
@@ -100,7 +100,7 @@ namespace EasyfisShop.ApiControllers
                             ManualCode = d.ManualArticleCode
                         };
 
-            return items.ToList();
+            return items.OrderByDescending(d => d.Id).ToList();
         }
 
         // ============================
@@ -116,7 +116,7 @@ namespace EasyfisShop.ApiControllers
                             Unit = d.Unit
                         };
 
-            return units.ToList();
+            return units.OrderByDescending(d => d.Id).ToList();
         }
 
         // =========================================
@@ -133,7 +133,7 @@ namespace EasyfisShop.ApiControllers
                                         ShopOrderStatus = d.ShopOrderStatus
                                     };
 
-            return shopOrderStatuses.ToList();
+            return shopOrderStatuses.OrderByDescending(d => d.Id).ToList();
         }
 
         // ========================================
@@ -150,7 +150,7 @@ namespace EasyfisShop.ApiControllers
                                  ShopGroup = d.ShopGroup
                              };
 
-            return shopGroups.ToList();
+            return shopGroups.OrderByDescending(d => d.Id).ToList();
         }
 
         // ==============================
@@ -167,7 +167,7 @@ namespace EasyfisShop.ApiControllers
                                Status = d.Status
                            };
 
-            return statuses.ToList();
+            return statuses.OrderByDescending(d => d.Id).ToList();
         }
 
         // ===================
@@ -195,10 +195,14 @@ namespace EasyfisShop.ApiControllers
 
                 var currentUser = from d in db.MstUsers where d.UserId == User.Identity.GetUserId() select d;
                 var userForm = from d in db.MstUserForms where d.UserId == currentUser.FirstOrDefault().Id && d.SysForm.FormName.Equals("ShopOrderList") select d;
-                var item = from d in db.MstArticles where d.Id == objShopOrder.ItemId select d;
-                var unit = from d in db.MstUnits where d.Id == objShopOrder.UnitId select d;
-                var shopOrderStatus = from d in db.MstShopOrderStatus where d.Id == objShopOrder.ShopOrderStatusId select d;
-                var shopGroup = from d in db.MstShopGroups where d.Id == objShopOrder.ShopGroupId select d;
+                var item = from d in db.MstArticles where d.ArticleTypeId == 1 && d.IsLocked == true select d;
+                IQueryable<Data.MstUnit> unit = null;
+                if (item.Any())
+                {
+                    unit = from d in db.MstUnits where d.Id == item.FirstOrDefault().UnitId select d;
+                }
+                var shopOrderStatus = from d in db.MstShopOrderStatus select d;
+                var shopGroup = from d in db.MstShopGroups select d;
 
                 if (!userForm.Any()) { responseStatusCode = HttpStatusCode.NotFound; responseMessage = "No rights."; }
                 else if (!userForm.FirstOrDefault().CanAdd) { responseStatusCode = HttpStatusCode.BadRequest; responseMessage = "No add rights."; }
@@ -220,16 +224,16 @@ namespace EasyfisShop.ApiControllers
                     {
                         BranchId = currentUser.FirstOrDefault().BranchId,
                         SPNumber = defaultSPNumber,
-                        SPDate = Convert.ToDateTime(objShopOrder.SPDate),
-                        ItemId = item.FirstOrDefault().Id,
-                        Quantity = objShopOrder.Quantity,
-                        UnitId = unit.FirstOrDefault().Id,
-                        Amount = objShopOrder.Amount,
-                        ShopOrderStatusId = shopOrderStatus.FirstOrDefault().Id,
+                        SPDate = DateTime.Today,
+                        ItemId = item.OrderByDescending(d => d.Id).FirstOrDefault().Id,
+                        Quantity = 0,
+                        UnitId = unit.OrderByDescending(d => d.Id).FirstOrDefault().Id,
+                        Amount = 0,
+                        ShopOrderStatusId = shopOrderStatus.OrderByDescending(d => d.Id).FirstOrDefault().Id,
                         ShopOrderStatusDate = DateTime.Today,
-                        ShopGroupId = shopGroup.FirstOrDefault().Id,
-                        Particulars = objShopOrder.Particulars,
-                        Status = objShopOrder.Status,
+                        ShopGroupId = shopGroup.OrderByDescending(d => d.Id).FirstOrDefault().Id,
+                        Particulars = "NA",
+                        Status = null,
                         IsPrinted = false,
                         IsLocked = false,
                         CreatedById = currentUser.FirstOrDefault().Id,
@@ -240,13 +244,15 @@ namespace EasyfisShop.ApiControllers
 
                     db.TrnShopOrders.InsertOnSubmit(newShopOrder);
                     db.SubmitChanges();
+
+                    responseMessage = newShopOrder.Id.ToString();
                 }
 
                 return Request.CreateResponse(responseStatusCode, responseMessage);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine(ex.Message);
+                Debug.WriteLine(ex);
                 return Request.CreateResponse(HttpStatusCode.InternalServerError, ex.Message);
             }
         }

@@ -121,7 +121,7 @@ namespace EasyfisShop.ApiControllers
         // ========================
         // Delete Shop Order Status
         // ========================
-        [Authorize, HttpDelete, Route("api/shopOrderStatus/update")]
+        [Authorize, HttpDelete, Route("api/shopOrderStatus/delete")]
         public HttpResponseMessage DeleteShopOrderStatus(String id)
         {
             try
