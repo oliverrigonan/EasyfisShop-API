@@ -208,6 +208,7 @@
   <ItemGroup>
     <Compile Include="ApiControllers\ApiMstShopGroupController.cs" />
     <Compile Include="ApiControllers\ApiMstShopOrderStatusController.cs" />
+    <Compile Include="ApiControllers\ApiMstUserFormController.cs" />
     <Compile Include="ApiControllers\ApiRepOrderSummaryReportController.cs" />
     <Compile Include="ApiControllers\ApiTrnShopOrderController.cs" />
     <Compile Include="ApiControllers\ApiTrnShopOrderLineController.cs" />
@@ -259,6 +260,7 @@
     <Compile Include="Entities\MstStatus.cs" />
     <Compile Include="Entities\MstUnit.cs" />
     <Compile Include="Entities\MstUser.cs" />
+    <Compile Include="Entities\MstUserForm.cs" />
     <Compile Include="Entities\RepOrderSummaryReport.cs" />
     <Compile Include="Entities\TrnShopOrder.cs" />
     <Compile Include="Entities\TrnShopOrderLine.cs" />
