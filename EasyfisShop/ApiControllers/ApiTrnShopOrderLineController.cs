@@ -27,12 +27,13 @@ namespace EasyfisShop.ApiControllers
                                  select new Entities.TrnShopOrderLine
                                  {
                                      Id = d.Id,
+                                     SPId = d.SPId,
                                      ActivityDate = d.ActivityDate.ToShortDateString(),
                                      Activity = d.Activity,
                                      User = d.MstUser.FullName
                                  };
 
-            return shopOrderLines.ToList();
+            return shopOrderLines.OrderByDescending(d => d.Id).ToList();
         }
 
         // ===================
@@ -71,7 +72,7 @@ namespace EasyfisShop.ApiControllers
             }
             catch (Exception ex)
             {
-                Debug.WriteLine(ex.Message);
+                Debug.WriteLine(ex);
                 return Request.CreateResponse(HttpStatusCode.InternalServerError, ex.Message);
             }
         }
@@ -100,7 +101,7 @@ namespace EasyfisShop.ApiControllers
                     var updateShopOrderLine = shopOrderLine.FirstOrDefault();
                     updateShopOrderLine.ActivityDate = Convert.ToDateTime(objShopOrderLine.ActivityDate);
                     updateShopOrderLine.Activity = objShopOrderLine.Activity;
-                    updateShopOrderLine.UserId = objShopOrderLine.UserId;
+                    updateShopOrderLine.UserId = currentUser.FirstOrDefault().Id;
                     db.SubmitChanges();
                 }
 
@@ -116,7 +117,7 @@ namespace EasyfisShop.ApiControllers
         // ======================
         // Delete Shop Order Line
         // ======================
-        [Authorize, HttpDelete, Route("api/shopOrderLine/update")]
+        [Authorize, HttpDelete, Route("api/shopOrderLine/delete")]
         public HttpResponseMessage DeleteShopOrderLine(String id)
         {
             try
