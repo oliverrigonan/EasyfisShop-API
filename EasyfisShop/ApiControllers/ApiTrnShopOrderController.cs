@@ -370,6 +370,7 @@ namespace EasyfisShop.ApiControllers
                 else if (shopOrder.FirstOrDefault().IsLocked) { responseStatusCode = HttpStatusCode.BadRequest; responseMessage = "Cannot delete locked shop order."; }
                 else
                 {
+
                     db.TrnShopOrders.DeleteOnSubmit(shopOrder.FirstOrDefault());
                     db.SubmitChanges();
                 }
