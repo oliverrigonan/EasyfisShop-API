@@ -97,7 +97,8 @@ namespace EasyfisShop.ApiControllers
                             Id = d.Id,
                             Item = d.Article,
                             Code = d.ArticleCode,
-                            ManualCode = d.ManualArticleCode
+                            ManualCode = d.ManualArticleCode,
+                            UnitId = d.UnitId
                         };
 
             return items.OrderByDescending(d => d.Id).ToList();
@@ -296,7 +297,6 @@ namespace EasyfisShop.ApiControllers
                     lockShopOrder.ShopOrderStatusDate = Convert.ToDateTime(objShopOrder.ShopOrderStatusDate);
                     lockShopOrder.ShopGroupId = shopGroup.FirstOrDefault().Id;
                     lockShopOrder.Particulars = objShopOrder.Particulars;
-                    lockShopOrder.Status = objShopOrder.Status;
                     lockShopOrder.IsLocked = true;
                     lockShopOrder.UpdatedById = currentUser.FirstOrDefault().Id;
                     lockShopOrder.UpdatedDateTime = DateTime.Now;
@@ -315,7 +315,7 @@ namespace EasyfisShop.ApiControllers
         // =================
         // Unlock Shop Order
         // =================
-        [Authorize, HttpDelete, Route("api/shopOrder/unlock")]
+        [Authorize, HttpPut, Route("api/shopOrder/unlock")]
         public HttpResponseMessage UnlockShopOrder(String id)
         {
             try
@@ -370,7 +370,6 @@ namespace EasyfisShop.ApiControllers
                 else if (shopOrder.FirstOrDefault().IsLocked) { responseStatusCode = HttpStatusCode.BadRequest; responseMessage = "Cannot delete locked shop order."; }
                 else
                 {
-
                     db.TrnShopOrders.DeleteOnSubmit(shopOrder.FirstOrDefault());
                     db.SubmitChanges();
                 }

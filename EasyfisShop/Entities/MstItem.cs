@@ -11,5 +11,6 @@ namespace EasyfisShop.Entities
         public String Item { get; set; }
         public String Code { get; set; }
         public String ManualCode { get; set; }
+        public Int32 UnitId { get; set; }
     }
 }
