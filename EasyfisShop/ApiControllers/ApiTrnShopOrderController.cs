@@ -259,6 +259,59 @@ namespace EasyfisShop.ApiControllers
         }
 
         // ===============
+        // Save Shop Order
+        // ===============
+        [Authorize, HttpPut, Route("api/shopOrder/save")]
+        public HttpResponseMessage SaveShopOrder(Entities.TrnShopOrder objShopOrder)
+        {
+            try
+            {
+                HttpStatusCode responseStatusCode = HttpStatusCode.OK;
+                String responseMessage = "";
+
+                var currentUser = from d in db.MstUsers where d.UserId == User.Identity.GetUserId() select d;
+                var userForm = from d in db.MstUserForms where d.UserId == currentUser.FirstOrDefault().Id && d.SysForm.FormName.Equals("ShopOrderDetail") select d;
+                var shopOrder = from d in db.TrnShopOrders where d.Id == objShopOrder.Id select d;
+                var item = from d in db.MstArticles where d.Id == objShopOrder.ItemId select d;
+                var unit = from d in db.MstUnits where d.Id == objShopOrder.UnitId select d;
+                var shopOrderStatus = from d in db.MstShopOrderStatus where d.Id == objShopOrder.ShopOrderStatusId select d;
+                var shopGroup = from d in db.MstShopGroups where d.Id == objShopOrder.ShopGroupId select d;
+
+                if (!userForm.Any()) { responseStatusCode = HttpStatusCode.NotFound; responseMessage = "No rights."; }
+                else if (!userForm.FirstOrDefault().CanLock) { responseStatusCode = HttpStatusCode.BadRequest; responseMessage = "No lock rights."; }
+                else if (!shopOrder.Any()) { responseStatusCode = HttpStatusCode.NotFound; responseMessage = "Reference not found."; }
+                else if (shopOrder.FirstOrDefault().IsLocked) { responseStatusCode = HttpStatusCode.BadRequest; responseMessage = "Already locked."; }
+                else if (!item.Any()) { responseStatusCode = HttpStatusCode.NotFound; responseMessage = "Item not found."; }
+                else if (!unit.Any()) { responseStatusCode = HttpStatusCode.NotFound; responseMessage = "Unit not found."; }
+                else if (!shopOrderStatus.Any()) { responseStatusCode = HttpStatusCode.NotFound; responseMessage = "Shop order status not found."; }
+                else if (!shopGroup.Any()) { responseStatusCode = HttpStatusCode.NotFound; responseMessage = "Shop group not found."; }
+                else
+                {
+                    var lockShopOrder = shopOrder.FirstOrDefault();
+                    lockShopOrder.SPDate = Convert.ToDateTime(objShopOrder.SPDate);
+                    lockShopOrder.ItemId = item.FirstOrDefault().Id;
+                    lockShopOrder.Quantity = objShopOrder.Quantity;
+                    lockShopOrder.UnitId = unit.FirstOrDefault().Id;
+                    lockShopOrder.Amount = objShopOrder.Amount;
+                    lockShopOrder.ShopOrderStatusId = shopOrderStatus.FirstOrDefault().Id;
+                    lockShopOrder.ShopOrderStatusDate = Convert.ToDateTime(objShopOrder.ShopOrderStatusDate);
+                    lockShopOrder.ShopGroupId = shopGroup.FirstOrDefault().Id;
+                    lockShopOrder.Particulars = objShopOrder.Particulars;
+                    lockShopOrder.UpdatedById = currentUser.FirstOrDefault().Id;
+                    lockShopOrder.UpdatedDateTime = DateTime.Now;
+                    db.SubmitChanges();
+                }
+
+                return Request.CreateResponse(responseStatusCode, responseMessage);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, ex.Message);
+            }
+        }
+
+        // ===============
         // Lock Shop Order
         // ===============
         [Authorize, HttpPut, Route("api/shopOrder/lock")]
