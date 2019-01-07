@@ -62,6 +62,7 @@ namespace EasyfisShop.ApiControllers
                              && d.SPDate <= Convert.ToDateTime(endDate)
                              && d.ShopGroupId == Convert.ToInt32(shopGroupId)
                              && d.ShopOrderStatusId == Convert.ToInt32(shopOrderStatusId)
+                             && d.IsLocked == true
                              select new Entities.RepOrderSummaryReport
                              {
                                  Id = d.Id,
