@@ -183,6 +183,167 @@ namespace EasyfisShop.ApiControllers
             return result;
         }
 
+        // =================
+        // Import Shop Group
+        // =================
+        [Authorize, HttpPost, Route("api/shopOrder/import")]
+        public HttpResponseMessage ImportShopOrder(List<Entities.TrnShopOrder> objShopOrders)
+        {
+            try
+            {
+                HttpStatusCode responseStatusCode = HttpStatusCode.OK;
+                String responseMessage = "";
+
+                var currentUser = from d in db.MstUsers where d.UserId == User.Identity.GetUserId() select d;
+                var userForm = from d in db.MstUserForms where d.UserId == currentUser.FirstOrDefault().Id && d.SysForm.FormName.Equals("ShopOrderList") select d;
+
+                if (!userForm.Any()) { responseStatusCode = HttpStatusCode.NotFound; responseMessage = "No rights."; }
+                else if (!userForm.FirstOrDefault().CanAdd) { responseStatusCode = HttpStatusCode.BadRequest; responseMessage = "No add rights."; }
+                else
+                {
+                    Debug.WriteLine(objShopOrders);
+
+                    if (objShopOrders.Any())
+                    {
+                        List<Entities.TrnShopOrder> newShopOrders = new List<Entities.TrnShopOrder>();
+                        foreach (var objShopOrder in objShopOrders)
+                        {
+                            Boolean isValid = true;
+
+                            Int32 itemId = 0, unitId = 0;
+                            var item = from d in db.MstArticles
+                                       where d.ManualArticleCode.Equals(objShopOrder.ItemCode)
+                                       && d.ArticleTypeId == 1
+                                       && d.IsLocked == true
+                                       select d;
+
+                            if (item.Any())
+                            {
+                                itemId = item.FirstOrDefault().Id;
+                                unitId = item.FirstOrDefault().UnitId;
+                            }
+                            else
+                            {
+                                isValid = false;
+
+                                responseStatusCode = HttpStatusCode.NotFound;
+                                responseMessage = "Item code: " + objShopOrder.ItemCode + " not found.";
+
+                                newShopOrders = new List<Entities.TrnShopOrder>();
+                                break;
+                            }
+
+                            Int32 shopOrderStatusId = 0;
+                            var shopOrderStatus = from d in db.MstShopOrderStatus where d.ShopOrderStatusCode.Equals(objShopOrder.ShopOrderStatusCode) select d;
+                            if (shopOrderStatus.Any())
+                            {
+                                shopOrderStatusId = shopOrderStatus.FirstOrDefault().Id;
+                            }
+                            else
+                            {
+                                isValid = false;
+
+                                responseStatusCode = HttpStatusCode.NotFound;
+                                responseMessage = "Shop order status code: " + objShopOrder.ShopOrderStatusCode + " not found.";
+
+                                newShopOrders = new List<Entities.TrnShopOrder>();
+                                break;
+                            }
+
+                            Int32 shopGroupId = 0;
+                            var shopGroup = from d in db.MstShopGroups where d.ShopGroupCode.Equals(objShopOrder.ShopGroupCode) select d;
+                            if (shopGroup.Any())
+                            {
+                                shopGroupId = shopGroup.FirstOrDefault().Id;
+                            }
+                            else
+                            {
+                                isValid = false;
+
+                                responseStatusCode = HttpStatusCode.NotFound;
+                                responseMessage = "Shop group code: " + objShopOrder.ShopGroupCode + " not found.";
+
+                                newShopOrders = new List<Entities.TrnShopOrder>();
+                                break;
+                            }
+
+                            var defaultSPNumber = "0000000001";
+                            var lastShopOrder = from d in db.TrnShopOrders.OrderByDescending(d => d.Id) where d.BranchId == currentUser.FirstOrDefault().BranchId select d;
+                            if (lastShopOrder.Any())
+                            {
+                                var SPNumber = Convert.ToInt32(lastShopOrder.FirstOrDefault().SPNumber) + 0000000001;
+                                defaultSPNumber = FillLeadingZeroes(SPNumber, 10);
+                            }
+
+                            if (isValid)
+                            {
+                                newShopOrders.Add(new Entities.TrnShopOrder()
+                                {
+                                    BranchId = currentUser.FirstOrDefault().BranchId,
+                                    SPNumber = defaultSPNumber,
+                                    SPDate = objShopOrder.SPDate,
+                                    ItemId = itemId,
+                                    Quantity = objShopOrder.Quantity,
+                                    UnitId = unitId,
+                                    Amount = objShopOrder.Amount,
+                                    ShopOrderStatusId = shopOrderStatusId,
+                                    ShopOrderStatusDate = objShopOrder.ShopOrderStatusDate,
+                                    ShopGroupId = shopGroupId,
+                                    Particulars = "Imported from CSV",
+                                    Status = null,
+                                    IsPrinted = false,
+                                    IsLocked = true,
+                                    CreatedById = currentUser.FirstOrDefault().Id,
+                                    CreatedDateTime = DateTime.Now.ToShortDateString(),
+                                    UpdatedById = currentUser.FirstOrDefault().Id,
+                                    UpdatedDateTime = DateTime.Now.ToShortDateString()
+                                });
+                            }
+                        }
+
+                        if (newShopOrders.Any())
+                        {
+                            foreach (var objNewShopOrder in newShopOrders)
+                            {
+                                Data.TrnShopOrder newShopOrder = new Data.TrnShopOrder
+                                {
+                                    BranchId = objNewShopOrder.BranchId,
+                                    SPNumber = objNewShopOrder.SPNumber,
+                                    SPDate = Convert.ToDateTime(objNewShopOrder.SPDate),
+                                    ItemId = objNewShopOrder.ItemId,
+                                    Quantity = objNewShopOrder.Quantity,
+                                    UnitId = objNewShopOrder.UnitId,
+                                    Amount = objNewShopOrder.Amount,
+                                    ShopOrderStatusId = objNewShopOrder.ShopOrderStatusId,
+                                    ShopOrderStatusDate = Convert.ToDateTime(objNewShopOrder.ShopOrderStatusDate),
+                                    ShopGroupId = objNewShopOrder.ShopGroupId,
+                                    Particulars = objNewShopOrder.Particulars,
+                                    Status = objNewShopOrder.Status,
+                                    IsPrinted = objNewShopOrder.IsPrinted,
+                                    IsLocked = objNewShopOrder.IsLocked,
+                                    CreatedById = objNewShopOrder.CreatedById,
+                                    CreatedDateTime = Convert.ToDateTime(objNewShopOrder.CreatedDateTime),
+                                    UpdatedById = objNewShopOrder.UpdatedById,
+                                    UpdatedDateTime = Convert.ToDateTime(objNewShopOrder.UpdatedDateTime),
+                                };
+
+                                db.TrnShopOrders.InsertOnSubmit(newShopOrder);
+                            }
+
+                            db.SubmitChanges();
+                        }
+                    }
+                }
+
+                return Request.CreateResponse(responseStatusCode, responseMessage);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex);
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, ex.Message);
+            }
+        }
+
         // ==============
         // Add Shop Order
         // ==============

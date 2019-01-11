@@ -13,13 +13,16 @@ namespace EasyfisShop.Entities
         public String SPNumber { get; set; }
         public String SPDate { get; set; }
         public Int32 ItemId { get; set; }
+        public String ItemCode { get; set; }
         public String Item { get; set; }
         public Decimal Quantity { get; set; }
         public Int32 UnitId { get; set; }
         public Decimal Amount { get; set; }
         public Int32 ShopOrderStatusId { get; set; }
+        public String ShopOrderStatusCode { get; set; }
         public String ShopOrderStatusDate { get; set; }
         public Int32 ShopGroupId { get; set; }
+        public String ShopGroupCode { get; set; }
         public String Particulars { get; set; }
         public String Status { get; set; }
         public Boolean IsPrinted { get; set; }

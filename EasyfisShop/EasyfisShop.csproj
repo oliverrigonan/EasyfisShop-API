@@ -313,6 +313,8 @@
       <LastGenOutput>easyfisdb.designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
     </Content>
+    <None Include="Properties\PublishProfiles\easyfisshop-sadguru-api - FTP.pubxml" />
+    <None Include="Properties\PublishProfiles\easyfisshop-sadguru-api - Web Deploy.pubxml" />
     <None Include="Scripts\jquery-3.3.1.intellisense.js" />
     <Content Include="Scripts\jquery-3.3.1.js" />
     <Content Include="Scripts\jquery-3.3.1.min.js" />
